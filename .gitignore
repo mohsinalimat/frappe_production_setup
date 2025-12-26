@@ -1,0 +1,37 @@
+# Environment file (contains secrets)
+.env
+
+# Generated docker-compose file
+docker-compose.yml
+docker-compose.override.yml
+
+# Backups (too large for git)
+backups/
+
+# Docker volumes and data
+volumes/
+sites/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+.temp/
+tmp/
+
+# SSL certificates (if stored locally)
+certs/
+ssl/
