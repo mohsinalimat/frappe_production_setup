@@ -12,7 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
 echo "=========================================="
-echo "Frappe Docker - Add App"
+echo "Frappe Docker - Add/Install App"
 echo "=========================================="
 echo ""
 
@@ -32,32 +32,53 @@ if ! docker compose ps --status running | grep -q "backend"; then
     exit 1
 fi
 
-# Check if apps.json exists
-if [ ! -f "apps.json" ]; then
-    echo "❌ apps.json not found!"
-    exit 1
-fi
-
-echo "📋 Current apps in apps.json:"
+# Ask user what they want to do
+echo "What would you like to do?"
 echo ""
-cat apps.json
+echo "  1) Add NEW app (from GitHub/repository)"
+echo "     - Downloads and builds app into Docker image"
+echo "     - Requires image rebuild and container restart"
 echo ""
-echo "=========================================="
+echo "  2) Install EXISTING app (already in image)"
+echo "     - App must already be built into the image"
+echo "     - No rebuild required, just installs on site"
 echo ""
+read -p "Select option (1 or 2): " OPTION
 
-echo "📝 Enter new app details:"
-echo ""
-read -p "App repository URL: " APP_URL
-
-if [ -z "$APP_URL" ]; then
-    echo "❌ Repository URL cannot be empty"
-    exit 1
-fi
-
-read -p "Branch (default: version-15): " APP_BRANCH
-APP_BRANCH=${APP_BRANCH:-version-15}
-
-echo ""
+if [ "$OPTION" = "1" ]; then
+    # Option 1: Add new app from repository
+    echo ""
+    echo "=========================================="
+    echo "Add New App from Repository"
+    echo "=========================================="
+    echo ""
+    
+    # Check if apps.json exists
+    if [ ! -f "apps.json" ]; then
+        echo "❌ apps.json not found!"
+        exit 1
+    fi
+    
+    echo "📋 Current apps in apps.json:"
+    echo ""
+    cat apps.json
+    echo ""
+    echo "=========================================="
+    echo ""
+    
+    echo "📝 Enter new app details:"
+    echo ""
+    read -p "App repository URL: " APP_URL
+    
+    if [ -z "$APP_URL" ]; then
+        echo "❌ Repository URL cannot be empty"
+        exit 1
+    fi
+    
+    read -p "Branch (default: version-15): " APP_BRANCH
+    APP_BRANCH=${APP_BRANCH:-version-15}
+    
+    echo ""
 echo "⚠️  IMPORTANT: Before adding apps:"
 echo "1. Make sure you have a recent backup"
 echo "2. This will rebuild the Docker image"
@@ -170,6 +191,63 @@ fi
 
 # Extract app name from URL (last part before .git)
 APP_NAME=$(basename "$APP_URL" .git)
+
+elif [ "$OPTION" = "2" ]; then
+    # Option 2: Install existing app
+    echo ""
+    echo "=========================================="
+    echo "Install Existing App from Image"
+    echo "=========================================="
+    echo ""
+    
+    # Get available apps from the image
+    echo "🔍 Detecting apps in Docker image..."
+    AVAILABLE_APPS=$(docker compose exec -T backend bash -c "ls -1 apps 2>/dev/null | grep -v apps.txt | grep -v frappe" || echo "")
+    
+    if [ -z "$AVAILABLE_APPS" ]; then
+        echo "❌ No apps found in image (besides frappe)"
+        exit 1
+    fi
+    
+    echo ""
+    echo "📦 Available apps in image:"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    
+    # Create array of apps
+    APP_ARRAY=()
+    i=1
+    while IFS= read -r app; do
+        [ -z "$app" ] && continue
+        echo "  $i) $app"
+        APP_ARRAY+=("$app")
+        ((i++))
+    done <<< "$AVAILABLE_APPS"
+    
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    
+    read -p "Select app number to install: " APP_NUM
+    
+    # Validate app number
+    if ! [[ "$APP_NUM" =~ ^[0-9]+$ ]] || [ "$APP_NUM" -lt 1 ] || [ "$APP_NUM" -gt "${#APP_ARRAY[@]}" ]; then
+        echo "❌ Invalid app number"
+        exit 1
+    fi
+    
+    APP_NAME="${APP_ARRAY[$((APP_NUM-1))]}"
+    
+    echo ""
+    echo "✅ Selected app: $APP_NAME"
+    echo ""
+    
+else
+    echo "❌ Invalid option"
+    exit 1
+fi
+
+# Common section: Install app on site(s)
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
 
 if [ "$SITE_CHOICE" = "all" ]; then
     echo ""
