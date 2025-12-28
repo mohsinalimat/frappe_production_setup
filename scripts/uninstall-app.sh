@@ -82,15 +82,22 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 
 # Create array of apps (excluding frappe as it cannot be uninstalled)
 APP_ARRAY=()
+APP_DISPLAY=()
 i=1
-while IFS= read -r app; do
-    [ -z "$app" ] && continue
+while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    
+    # Extract only the app name (first column)
+    app=$(echo "$line" | awk '{print $1}')
+    
     # Skip frappe as it's the core and cannot be uninstalled
     if [ "$app" = "frappe" ]; then
         continue
     fi
-    echo "  $i) $app"
-    APP_ARRAY+=("$app")
+    
+    echo "  $i) $line"
+    APP_ARRAY+=("$app")           # Store clean app name
+    APP_DISPLAY+=("$line")        # Store full line for display
     ((i++))
 done <<< "$INSTALLED_APPS"
 
@@ -115,9 +122,10 @@ if ! [[ "$APP_NUM" =~ ^[0-9]+$ ]] || [ "$APP_NUM" -lt 1 ] || [ "$APP_NUM" -gt "$
 fi
 
 APP_NAME="${APP_ARRAY[$((APP_NUM-1))]}"
+APP_DISPLAY_NAME="${APP_DISPLAY[$((APP_NUM-1))]}"
 
 echo ""
-echo "⚠️  WARNING: You are about to uninstall: $APP_NAME"
+echo "⚠️  WARNING: You are about to uninstall: $APP_DISPLAY_NAME"
 echo ""
 echo "This will:"
 echo "  • Remove the app from site: $SITE_NAME"
