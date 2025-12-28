@@ -77,29 +77,68 @@ if [ -z "$DB_PASS" ]; then
     echo ""
 fi
 
-# Ask for apps to install
+# Get list of available apps
 echo ""
-echo "Install ERPNext? (recommended)"
-read -p "(Y/n): " -n 1 -r INSTALL_ERPNEXT
-echo ""
+echo "🔍 Detecting available apps in the Docker image..."
+AVAILABLE_APPS=$(docker compose exec -T backend bash -c "ls -1 apps 2>/dev/null | grep -v apps.txt | grep -v frappe" || echo "")
 
-INSTALL_APPS=""
-if [[ ! $INSTALL_ERPNEXT =~ ^[Nn]$ ]]; then
-    INSTALL_APPS="--install-app erpnext"
+if [ -z "$AVAILABLE_APPS" ]; then
+    echo "⚠️  Could not detect apps. Using defaults."
+    AVAILABLE_APPS="erpnext
+hrms
+payments"
 fi
 
-# Additional apps
 echo ""
-echo "Do you want to install additional apps? (e.g., hrms, payments)"
-read -p "(y/N): " -n 1 -r INSTALL_ADDITIONAL
-echo ""
+echo "📦 Available apps:"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-if [[ $INSTALL_ADDITIONAL =~ ^[Yy]$ ]]; then
-    echo "Enter app names separated by space (e.g., hrms payments):"
-    read -r ADDITIONAL_APPS
-    for app in $ADDITIONAL_APPS; do
+# Create arrays for apps
+APP_ARRAY=()
+i=1
+while IFS= read -r app; do
+    [ -z "$app" ] && continue
+    echo "  $i) $app"
+    APP_ARRAY+=("$app")
+    ((i++))
+done <<< "$AVAILABLE_APPS"
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "Note: 'frappe' is installed by default"
+echo ""
+echo "Select apps to install:"
+echo "  • Enter numbers separated by space (e.g., 1 2 3)"
+echo "  • Enter 'all' to install all apps"
+echo "  • Press Enter to skip (frappe only)"
+echo ""
+read -p "Your choice: " APP_SELECTION
+
+INSTALL_APPS=""
+
+if [ "$APP_SELECTION" = "all" ]; then
+    echo ""
+    echo "✅ Installing all available apps"
+    for app in "${APP_ARRAY[@]}"; do
         INSTALL_APPS="$INSTALL_APPS --install-app $app"
     done
+elif [ -n "$APP_SELECTION" ]; then
+    echo ""
+    echo "✅ Selected apps:"
+    for num in $APP_SELECTION; do
+        # Validate number
+        if [[ "$num" =~ ^[0-9]+$ ]] && [ "$num" -ge 1 ] && [ "$num" -le "${#APP_ARRAY[@]}" ]; then
+            idx=$((num-1))
+            app="${APP_ARRAY[$idx]}"
+            echo "  • $app"
+            INSTALL_APPS="$INSTALL_APPS --install-app $app"
+        else
+            echo "  ⚠️  Invalid selection: $num (skipped)"
+        fi
+    done
+else
+    echo ""
+    echo "ℹ️  Installing frappe only (no apps selected)"
 fi
 
 echo ""
