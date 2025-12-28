@@ -29,7 +29,7 @@ if [ ! -f "docker-compose.yml" ]; then
 fi
 
 # Check if services are running
-if ! docker compose ps | grep -q "backend.*running"; then
+if ! docker compose ps --status running | grep -q "backend"; then
     echo "❌ Services are not running!"
     echo "Please start services first:"
     echo "  docker compose up -d"
