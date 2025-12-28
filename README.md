@@ -133,15 +133,18 @@ frappe-production-setup/
 ├── scripts/                           # Automation scripts
 │   ├── install-prerequisites.sh      # Install Docker, Docker Compose, Git
 │   ├── build-image.sh                # Build custom Frappe image with apps
-│   ├── deploy-production.sh          # Deploy production setup
+│   ├── deploy-production.sh          # Deploy production setup with SSL
 │   ├── deploy-development.sh         # Deploy development setup
-│   ├── create-site.sh                # Create new Frappe site
+│   ├── create-site.sh                # Create new Frappe site (interactive app selection)
+│   ├── drop-site.sh                  # Safely drop/delete a site with backup
+│   ├── add-app.sh                    # Add new app to running production
 │   ├── backup.sh                     # Backup all sites
 │   ├── restore.sh                    # Restore from backup
 │   ├── update.sh                     # Update Frappe/ERPNext
 │   ├── start.sh                      # Start all containers
 │   ├── stop.sh                       # Stop all containers
-│   └── logs.sh                       # View container logs
+│   ├── logs.sh                       # View container logs
+│   └── cleanup.sh                    # Remove Docker setup completely
 └── backups/                           # Backup storage directory
 ```
 
@@ -169,6 +172,33 @@ frappe-production-setup/
 
 ```bash
 ./scripts/backup.sh
+```
+
+### Restore from Backup
+
+```bash
+./scripts/restore.sh
+```
+
+### Add New App to Production
+
+```bash
+# Add a new app to running production (rebuilds image and installs)
+./scripts/add-app.sh
+```
+
+### Delete a Site
+
+```bash
+# Safely drop a site with optional backup
+./scripts/drop-site.sh
+```
+
+### Complete Cleanup
+
+```bash
+# Remove entire Docker setup (with confirmations)
+./scripts/cleanup.sh
 ```
 
 ### Update Frappe/ERPNext
