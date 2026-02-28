@@ -53,6 +53,7 @@ nano .env
 - `DB_PASSWORD` - Set a strong database password
 - `LETSENCRYPT_EMAIL` - Your email for SSL certificates
 - `SITES` - Your domain name (e.g., `erp.yourdomain.com`)
+- `SITES_RULE` - Your Host name (e.g., `erp.yourdomain.com`)
 
 ### Step 4: Configure Apps (Optional)
 
